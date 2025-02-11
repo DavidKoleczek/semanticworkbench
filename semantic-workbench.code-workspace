@@ -64,6 +64,10 @@
       "path": "assistants/explorer-assistant"
     },
     {
+      "name": "assistants:explorer-doc-edit-assistant",
+      "path": "assistants/explorer-doc-edit-assistant"
+    },
+    {
       "name": "assistants:guided-conversation-assistant",
       "path": "assistants/guided-conversation-assistant"
     },
