@@ -30,7 +30,7 @@ from semantic_workbench_assistant.assistant_app import (
 )
 
 from .config import AssistantConfigModel
-from .response import respond_to_conversation
+from .response import DocumentInspectorStateProvider, respond_to_conversation
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +59,8 @@ async def content_evaluator_factory(context: ConversationContext) -> ContentSafe
 
 content_safety = ContentSafety(content_evaluator_factory)
 
+document_inspector_state_provider = DocumentInspectorStateProvider(assistant_config)
+
 # create the AssistantApp instance
 assistant = AssistantApp(
     assistant_service_id=service_id,
@@ -66,6 +68,9 @@ assistant = AssistantApp(
     assistant_service_description=service_description,
     config_provider=assistant_config.provider,
     content_interceptor=content_safety,
+    inspector_state_providers={
+        "markdown_document": document_inspector_state_provider,
+    },
 )
 
 
@@ -133,14 +138,16 @@ async def on_message_created(
         metadata: dict[str, Any] = {"debug": {"content_safety": event.data.get(content_safety.metadata_key, {})}}
 
         try:
-            # Prospector assistant response
-            await respond_to_conversation(
-                artifacts_extension=artifacts_extension,
-                attachments_extension=attachments_extension,
-                context=context,
-                config=config,
-                metadata=metadata,
-            )
+            async with context.state_updated_event_after(
+                document_inspector_state_provider.display_name, focus_event=True
+            ):
+                await respond_to_conversation(
+                    artifacts_extension=artifacts_extension,
+                    attachments_extension=attachments_extension,
+                    context=context,
+                    config=config,
+                    metadata=metadata,
+                )
         except Exception as e:
             logger.exception(f"exception occurred responding to conversation: {e}")
             deepmerge.always_merger.merge(metadata, {"debug": {"error": str(e)}})

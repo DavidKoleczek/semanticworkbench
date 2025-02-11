@@ -1,3 +1,3 @@
-from .response import respond_to_conversation
+from .response import DocumentInspectorStateProvider, respond_to_conversation
 
-__all__ = ["respond_to_conversation"]
+__all__ = ["respond_to_conversation", "DocumentInspectorStateProvider"]

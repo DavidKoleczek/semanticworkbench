@@ -8,6 +8,7 @@
 import logging
 import re
 import time
+from pathlib import Path
 from typing import Any, Awaitable, Callable, Sequence
 
 import deepmerge
@@ -21,7 +22,10 @@ from semantic_workbench_api_model.workbench_model import (
     NewConversationMessage,
 )
 from semantic_workbench_assistant.assistant_app import (
+    AssistantConversationInspectorStateDataModel,
+    BaseModelAssistantConfig,
     ConversationContext,
+    storage_directory_for_context,
 )
 
 from ..config import AssistantConfigModel
@@ -56,6 +60,19 @@ async def respond_to_conversation(
     where they were mentioned and any relevant surrounding context such as how to interpret the attachment
     or why it was shared or what to do with it.
     """
+
+    current_document = _read_doc_state(context)
+    current_document = """# Programming Languages Overview
+## Popular Languages Comparison
+| Language   | Type          | Year Created | Main Use Case    |
+|------------|---------------|--------------|------------------|
+| Python     | Interpreted   | 1991         | General Purpose   |
+| JavaScript | Interpreted   | 1995         | Web Development   |
+| Java       | Compiled      | 1995         | Enterprise Apps   |
+
+Python is known for its readability and extensive library ecosystem."""
+
+    _write_doc_state(context, current_document)
 
     response_provider = (
         AnthropicResponseProvider(assistant_config=config, anthropic_client_config=config.ai_client_config)
@@ -310,12 +327,72 @@ async def respond_to_conversation(
 
 # endregion
 
+#
+# region Inspector
+#
+
+
+class DocumentInspectorStateProvider:
+    display_name = "Current Document"
+    description = "Current state of the markdown document that can be edited by the assistant."
+
+    def __init__(
+        self,
+        config_provider: BaseModelAssistantConfig["AssistantConfigModel"],
+    ) -> None:
+        self.config_provider = config_provider
+
+    async def get(self, context: ConversationContext) -> AssistantConversationInspectorStateDataModel:
+        """
+        Get the state for the conversation.
+        """
+
+        doc: str = _read_doc_state(context)
+        return AssistantConversationInspectorStateDataModel({"content": doc})
+
+
+# endregion
 
 #
 # region Helpers
 #
 
 # TODO: move to a common module, such as either the openai_client or attachment module for easy re-use in other assistants
+
+
+def _get_doc_storage_path(context: ConversationContext, filename: str | None = None) -> Path:
+    """
+    Get the path to the directory for storing guided conversation files.
+    """
+    path = storage_directory_for_context(context) / "documents"
+    if filename:
+        path /= filename
+    return path
+
+
+def _write_doc_state(context: ConversationContext, content: str) -> None:
+    """
+    Write the Markdown content to a file.
+    """
+    path = _get_doc_storage_path(context)
+    if not path.exists():
+        path.mkdir(parents=True)
+    path = path / "document.md"
+    path.write_text(content)
+
+
+def _read_doc_state(context: ConversationContext) -> str:
+    """
+    Read the content of the Markdown document from a file.
+    Returns empty string if file doesn't exist.
+    """
+    path = _get_doc_storage_path(context, "document.md")
+    if path.exists():
+        try:
+            return path.read_text()
+        except Exception:
+            return ""
+    return ""
 
 
 async def _num_tokens_from_messages(
