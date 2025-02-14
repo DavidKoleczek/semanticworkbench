@@ -21,7 +21,6 @@
   "python.analysis.autoFormatStrings": true,
   "python.analysis.autoImportCompletions": true,
   "python.analysis.diagnosticMode": "workspace",
-  "python.analysis.fixAll": ["source.unusedImports"],
   "python.analysis.inlayHints.functionReturnTypes": true,
   "python.analysis.typeCheckingMode": "standard",
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
@@ -30,7 +29,6 @@
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
       "source.fixAll": "explicit",
-      "source.unusedImports": "explicit",
       "source.organizeImports": "explicit",
       "source.formatDocument": "explicit"
     }

@@ -14,8 +14,10 @@ dependencies = [
     "deepmerge>=2.0",
     "html2docx>=1.6.0",
     "markdown>=3.6",
-    "openai>=1.61.0",
+    "openai>=1.61",
     "openai-client>=0.1.0",
+    "pendulum>=3.0",
+    "python-liquid>=1.13",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -31,9 +33,21 @@ assistant-extensions = { path = "../../libraries/python/assistant-extensions", e
 content-safety = { path = "../../libraries/python/content-safety/", editable = true }
 openai-client = { path = "../../libraries/python/openai-client", editable = true }
 
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+unfixable = ["F401"]
+
+[tool.ruff.format]
+docstring-code-format = true
+line-ending = "lf"
+preview = true
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
-dev = ["pyright>=1.1.389"]
+dev = ["pyright>=1.1.389", "ruff"]

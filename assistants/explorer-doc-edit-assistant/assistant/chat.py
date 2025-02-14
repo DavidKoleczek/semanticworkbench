@@ -1,8 +1,8 @@
 # Copyright (c) Microsoft. All rights reserved.
 
-# Prospector Assistant
+# Doc Edit Assistant
 #
-# This assistant helps you mine ideas from artifacts.
+# This assistant shows document editing capabilities.
 #
 
 import logging

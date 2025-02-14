@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft. All rights reserved.
 
 import logging
-from typing import Iterable, Sequence
+from typing import Any, Iterable, Sequence
 
 import deepmerge
 import openai_client
@@ -71,6 +71,17 @@ class OpenAIResponseProvider(ResponseProvider):
             },
             metadata_key=metadata_key,
         )
+
+    async def chat_completion(
+        self,
+        **kwargs: dict,
+    ) -> Any:
+        # TODO: Hack for now
+        if "model" in kwargs:
+            self.service_config.azure_openai_deployment = kwargs["model"]
+        async with openai_client.create_client(self.service_config) as client:
+            response = await client.chat.completions.create(**kwargs)  # type: ignore
+        return response
 
     async def get_response(
         self,

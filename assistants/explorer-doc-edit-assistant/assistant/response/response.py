@@ -1,8 +1,8 @@
 # Copyright (c) Microsoft. All rights reserved.
 
-# Prospector Assistant
+# Doc Edit Assistant
 #
-# This assistant helps you mine ideas from artifacts.
+# This assistant shows document editing capabilities
 #
 
 import logging
@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, Sequence
 
 import deepmerge
+import pendulum
 from assistant_extensions.ai_clients.model import CompletionMessage
 from assistant_extensions.artifacts import ArtifactsExtension
 from assistant_extensions.attachments import AttachmentsExtension
@@ -26,6 +27,17 @@ from semantic_workbench_assistant.assistant_app import (
     BaseModelAssistantConfig,
     ConversationContext,
     storage_directory_for_context,
+)
+
+from assistant.doc_edit_skill import DocEditSkill, DocEditSkillConfig, DocEditSkillDefinition
+from assistant.helpers import compile_messages
+from assistant.prompts.response import RESPONSE_MESSAGES
+from assistant.prompts.routing import (
+    MODE_ANSWER_TOOL,
+    MODE_ANSWER_TOOL_NAME,
+    MODE_DOC_EDIT_TOOL,
+    MODE_DOC_EDIT_TOOL_NAME,
+    ROUTING_MESSAGES,
 )
 
 from ..config import AssistantConfigModel
@@ -62,17 +74,6 @@ async def respond_to_conversation(
     """
 
     current_document = _read_doc_state(context)
-    current_document = """# Programming Languages Overview
-## Popular Languages Comparison
-| Language   | Type          | Year Created | Main Use Case    |
-|------------|---------------|--------------|------------------|
-| Python     | Interpreted   | 1991         | General Purpose   |
-| JavaScript | Interpreted   | 1995         | Web Development   |
-| Java       | Compiled      | 1995         | Enterprise Apps   |
-
-Python is known for its readability and extensive library ecosystem."""
-
-    _write_doc_state(context, current_document)
 
     response_provider = (
         AnthropicResponseProvider(assistant_config=config, anthropic_client_config=config.ai_client_config)
@@ -218,16 +219,87 @@ Python is known for its readability and extensive library ecosystem."""
     # set default response message type
     message_type = MessageType.chat
 
-    # generate a response from the AI model
-    response_result = await response_provider.get_response(
-        messages=completion_messages,
-        metadata_key=method_metadata_key,
-    )
-    content = response_result.content
-    message_type = response_result.message_type
-    completion_total_tokens = response_result.completion_total_tokens
+    completion_messages_openai: list[dict[str, str]] = []
+    for message in completion_messages[1:]:  # TODO: For now remove the first message which is hardcoded.
+        completion_messages_openai.append({
+            "role": message.role,
+            "content": message.content,
+        })
 
-    deepmerge.always_merger.merge(metadata, response_result.metadata)
+    # Step 1. Route to the appropriate mode
+    routing_messages = compile_messages(
+        messages=ROUTING_MESSAGES,
+        variables={
+            "knowledge_cutoff": "2023-10",
+            "current_date": pendulum.now().format("YYYY-MM-DD"),
+            "attachments": "",
+            "doc": current_document,
+        },
+    )
+    routing_messages.extend(completion_messages_openai)
+    kwargs = {
+        "model": "gpt-4o-2024-11-20",
+        "messages": routing_messages,
+        "temperature": 0.1,
+        "tools": [MODE_DOC_EDIT_TOOL, MODE_ANSWER_TOOL],
+        "parallel_tool_calls": False,
+    }
+    routing_result = await response_provider.chat_completion(**kwargs)  # type: ignore
+    choice = routing_result.choices[0]
+    routing_tool_name = MODE_ANSWER_TOOL_NAME
+    if choice.message.tool_calls:
+        function = choice.message.tool_calls[0].function
+        if function.name == MODE_DOC_EDIT_TOOL_NAME:
+            routing_tool_name = MODE_DOC_EDIT_TOOL_NAME
+
+    # Step 2. Execute the mode (if mode is response, skip to 3)
+    if routing_tool_name == MODE_ANSWER_TOOL_NAME:
+        pass
+    elif routing_tool_name == MODE_DOC_EDIT_TOOL_NAME:
+        doc_edit_skill = DocEditSkill(
+            definition=DocEditSkillDefinition(
+                context="",  # TODO: Add back attachments
+                doc_markdown=current_document,
+                conversation_history=completion_messages_openai,
+            ),
+            skill_config=DocEditSkillConfig(),
+            response_provider=response_provider,
+        )
+        doc_edit_output = await doc_edit_skill.run()
+        # Append chat result as a new message and update current document.
+        completion_messages_openai.append({
+            "role": "assistant",
+            "content": doc_edit_output.change_summary or doc_edit_output.output_message,
+        })
+        _write_doc_state(context, doc_edit_output.updated_doc_markdown)
+        current_document = _read_doc_state(context)
+
+    # Step 3. Last step is always to generate a chat response.
+    response_messages = compile_messages(
+        messages=RESPONSE_MESSAGES,
+        variables={
+            "knowledge_cutoff": "2023-10",
+            "current_date": pendulum.now().format("YYYY-MM-DD"),
+            "attachments": "",  # TODO: Format attachments
+            "doc": current_document,
+        },
+    )
+    response_messages.extend(completion_messages_openai)
+
+    kwargs = {
+        "model": "gpt-4o-2024-11-20",
+        "messages": response_messages,
+        "temperature": 0.7,
+    }
+    response_result = await response_provider.chat_completion(**kwargs)  # type: ignore
+    chat_message = response_result.choices[0].message.content
+
+    # TODO: Handle either tool call or response here.
+
+    # TODO: BELOW THIS IS UNTESTED
+    content = chat_message
+    message_type = MessageType.chat
+    completion_total_tokens = 1
 
     # create the footer items for the response
     footer_items = []
