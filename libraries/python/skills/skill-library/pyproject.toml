@@ -8,7 +8,6 @@ requires-python = ">=3.11"
 dependencies = [
     "assistant-drive>=0.1.0",
     "assistant-extensions[attachments]>=0.1.0",
-    "context>=0.1.0",
     "events>=0.1.0",
     "openai-client>=0.1.0",
     "openai>=1.16.1",
@@ -18,6 +17,8 @@ dependencies = [
     "python-liquid>=1.12.1",
     "requests>=2.32.0",
     "tiktoken>=0.8.0",
+    "jsonschema>=4.23.0",
+    "bs4>=0.0.2",
 ]
 
 [dependency-groups]
@@ -31,7 +32,6 @@ dev = [
 [tool.uv.sources]
 assistant-drive = { path = "../../assistant-drive", editable = true }
 assistant-extensions = { path = "../../assistant-extensions", editable = true }
-context = { path = "../../context", editable = true }
 events = { path = "../../events", editable = true }
 openai-client = { path = "../../openai-client", editable = true }
 
@@ -48,3 +48,4 @@ log_cli_format = "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+norecursedirs = ["skill_library/skills/guided_conversation"]

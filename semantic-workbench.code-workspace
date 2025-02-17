@@ -79,10 +79,10 @@
       "name": "assistants:skill-assistant",
       "path": "assistants/skill-assistant"
     },
-    {
-      "name": "libraries:anthropic-client",
-      "path": "libraries/python/anthropic-client"
-    },
+    // {
+    //   "name": "libraries:anthropic-client",
+    //   "path": "libraries/python/anthropic-client"
+    // },
     {
       "name": "libraries:assistant-drive",
       "path": "libraries/python/assistant-drive"
@@ -94,10 +94,6 @@
     {
       "name": "libraries:content-safety",
       "path": "libraries/python/content-safety"
-    },
-    {
-      "name": "libraries:context",
-      "path": "libraries/python/context"
     },
     {
       "name": "libraries:events",
@@ -120,40 +116,16 @@
       "path": "libraries/python/semantic-workbench-assistant"
     },
     {
-      "name": "libraries:skills:document-skill",
-      "path": "libraries/python/skills/skills/document-skill"
-    },
-    {
-      "name": "libraries:skills:form-filler-skill",
-      "path": "libraries/python/skills/skills/form-filler-skill"
-    },
-    {
-      "name": "libraries:skills:guided-conversation-skill",
-      "path": "libraries/python/skills/skills/guided-conversation-skill"
-    },
-    {
-      "name": "libraries:skills:notebooks",
-      "path": "libraries/python/skills/notebooks"
-    },
-    {
-      "name": "libraries:skills:posix-skill",
-      "path": "libraries/python/skills/skills/posix-skill"
-    },
-    {
-      "name": "libraries:skills:prospector-skill",
-      "path": "libraries/python/skills/skills/prospector-skill"
-    },
-    {
-      "name": "libraries:skills:skill-template",
-      "path": "libraries/python/skills/skills/skill-template"
-    },
-    {
       "name": "libraries:skills:skill-library",
       "path": "libraries/python/skills/skill-library"
     },
     {
       "name": "mcp-servers:ai-assist-content",
       "path": "mcp-servers/ai-assist-content"
+    },
+    {
+      "name": "mcp-server-bing-search",
+      "path": "mcp-servers/mcp-server-bing-search"
     },
     {
       "name": "mcp-servers:mcp-server-giphy",
