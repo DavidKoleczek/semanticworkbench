@@ -29,8 +29,9 @@ from semantic_workbench_assistant.assistant_app import (
     ConversationContext,
 )
 
-from .config import AssistantConfigModel
-from .response import DocumentInspectorStateProvider, respond_to_conversation
+from assistant.assistant_api import AssistantAPI, DocumentInspectorStateProvider
+from assistant.config import AssistantConfigModel
+from assistant.main_routine import RoutineDefinition, RoutineIteration
 
 logger = logging.getLogger(__name__)
 
@@ -141,13 +142,10 @@ async def on_message_created(
             async with context.state_updated_event_after(
                 document_inspector_state_provider.display_name, focus_event=True
             ):
-                await respond_to_conversation(
-                    artifacts_extension=artifacts_extension,
-                    attachments_extension=attachments_extension,
-                    context=context,
-                    config=config,
-                    metadata=metadata,
-                )
+                assistant_api = AssistantAPI(context, config.ai_client_config.service_config)
+                routine = RoutineIteration(assistant_api)
+                definition = RoutineDefinition()
+                await routine.run_routine(definition)
         except Exception as e:
             logger.exception(f"exception occurred responding to conversation: {e}")
             deepmerge.always_merger.merge(metadata, {"debug": {"error": str(e)}})

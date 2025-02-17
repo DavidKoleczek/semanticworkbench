@@ -1,6 +1,8 @@
+# Copyright (c) Microsoft. All rights reserved.
+
 from typing import Annotated
 
-from assistant_extensions.ai_clients.config import AIClientConfig
+from assistant_extensions.ai_clients.config import AzureOpenAIClientConfigModel
 from assistant_extensions.artifacts import ArtifactsConfigModel
 from assistant_extensions.attachments import AttachmentsConfigModel
 from assistant_extensions.workflows import WorkflowsConfigModel
@@ -109,26 +111,6 @@ class AssistantConfigModel(BaseModel):
         " to download the midi file."
     )
 
-    # "You are an AI assistant that helps teams synthesize information from conversations and documents to create"
-    #     " a shared understanding of complex topics. As you do so, there are tools observing the conversation and"
-    #     " they will automatically create an outline and a document based on the conversation, you don't need to do"
-    #     " anything special to trigger this, just have a conversation with the user. Focus on assisting the user and"
-    #     " drawing out the info needed in order to bring clarity to the topic at hand."
-
-    guardrails_prompt: Annotated[
-        str,
-        Field(
-            title="Guardrails Prompt",
-            description=(
-                "The prompt used to inform the AI assistant about the guardrails to follow. Default value based upon"
-                " recommendations from: [Microsoft OpenAI Service: System message templates]"
-                "(https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/system-message"
-                "#define-additional-safety-and-behavioral-guardrails)"
-            ),
-        ),
-        UISchema(widget="textarea", enable_markdown_in_description=True),
-    ] = helpers.load_text_include("guardrails_prompt.txt")
-
     welcome_message: Annotated[
         str,
         Field(
@@ -159,7 +141,15 @@ class AssistantConfigModel(BaseModel):
         ),
     ] = HighTokenUsageWarning()
 
-    ai_client_config: AIClientConfig
+    ai_client_config: Annotated[
+        AzureOpenAIClientConfigModel,
+        Field(
+            title="AI Client Configuration",
+            discriminator="ai_service_type",
+            default=AzureOpenAIClientConfigModel.model_construct(),
+        ),
+        UISchema(widget="radio", hide_title=True),
+    ]
 
     content_safety_config: Annotated[
         CombinedContentSafetyEvaluatorConfig,
