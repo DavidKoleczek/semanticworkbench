@@ -9,10 +9,7 @@ import logging
 from typing import Any
 
 import deepmerge
-from assistant_extensions.artifacts import ArtifactsExtension
-from assistant_extensions.artifacts._model import ArtifactsConfigModel
 from assistant_extensions.attachments import AttachmentsExtension
-from assistant_extensions.workflows import WorkflowsConfigModel, WorkflowsExtension
 from content_safety.evaluators import CombinedContentSafetyEvaluator
 from semantic_workbench_api_model.workbench_model import (
     ConversationEvent,
@@ -22,7 +19,6 @@ from semantic_workbench_api_model.workbench_model import (
 )
 from semantic_workbench_assistant.assistant_app import (
     AssistantApp,
-    AssistantContext,
     BaseModelAssistantConfig,
     ContentSafety,
     ContentSafetyEvaluator,
@@ -75,17 +71,7 @@ assistant = AssistantApp(
 )
 
 
-async def artifacts_config_provider(context: AssistantContext) -> ArtifactsConfigModel:
-    return (await assistant_config.get(context)).extensions_config.artifacts
-
-
-async def workflows_config_provider(context: AssistantContext) -> WorkflowsConfigModel:
-    return (await assistant_config.get(context)).extensions_config.workflows
-
-
-artifacts_extension = ArtifactsExtension(assistant, artifacts_config_provider)
 attachments_extension = AttachmentsExtension(assistant)
-workflows_extension = WorkflowsExtension(assistant, "content_safety", workflows_config_provider)
 
 #
 # create the FastAPI app instance
@@ -142,7 +128,8 @@ async def on_message_created(
             async with context.state_updated_event_after(
                 document_inspector_state_provider.display_name, focus_event=True
             ):
-                assistant_api = AssistantAPI(context, config.ai_client_config.service_config)
+                # TODO: Pass the deployment names to the routine instead of hardcoding them.
+                assistant_api = AssistantAPI(context, config.service_config)
                 routine = RoutineIteration(assistant_api)
                 definition = RoutineDefinition()
                 await routine.run_routine(definition)
@@ -172,41 +159,6 @@ async def should_respond_to_message(context: ConversationContext, message: Conve
     Returns:
         bool: True if the assistant should respond to the message; otherwise, False.
     """
-    config = await assistant_config.get(context.assistant)
-
-    # ignore messages that are directed at a participant other than this assistant
-    if message.metadata.get("directed_at") and message.metadata["directed_at"] != context.assistant.id:
-        return False
-
-    # if configure to only respond to mentions, ignore messages where the content does not mention the assistant somewhere in the message
-    if config.only_respond_to_mentions and f"@{context.assistant.name}" not in message.content:
-        # check to see if there are any other assistants in the conversation
-        participant_list = await context.get_participants()
-        other_assistants = [
-            participant
-            for participant in participant_list.participants
-            if participant.role == "assistant" and participant.id != context.assistant.id
-        ]
-        if len(other_assistants) == 0:
-            # no other assistants in the conversation, check the last 10 notices to see if the assistant has warned the user
-            assistant_messages = await context.get_messages(
-                participant_ids=[context.assistant.id], message_types=[MessageType.notice], limit=10
-            )
-            at_mention_warning_key = "at_mention_warning"
-            if len(assistant_messages.messages) == 0 or all(
-                at_mention_warning_key not in message.metadata for message in assistant_messages.messages
-            ):
-                # assistant has not been mentioned in the last 10 messages, send a warning message in case the user is not aware
-                # that the assistant needs to be mentioned to receive a response
-                await context.send_messages(
-                    NewConversationMessage(
-                        content=f"{context.assistant.name} is configured to only respond to messages that @mention it. Please @mention the assistant in your message to receive a response.",
-                        message_type=MessageType.notice,
-                        metadata={at_mention_warning_key: True},
-                    )
-                )
-
-        return False
 
     return True
 
@@ -223,8 +175,7 @@ async def on_conversation_created(context: ConversationContext) -> None:
         return
 
     # send a welcome message to the conversation
-    config = await assistant_config.get(context.assistant)
-    welcome_message = config.welcome_message
+    welcome_message = "Welcome! What are we working on today?"
     await context.send_messages(
         NewConversationMessage(
             content=welcome_message,

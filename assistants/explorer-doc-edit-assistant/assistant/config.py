@@ -2,15 +2,10 @@
 
 from typing import Annotated
 
-from assistant_extensions.ai_clients.config import AzureOpenAIClientConfigModel
-from assistant_extensions.artifacts import ArtifactsConfigModel
-from assistant_extensions.attachments import AttachmentsConfigModel
-from assistant_extensions.workflows import WorkflowsConfigModel
 from content_safety.evaluators import CombinedContentSafetyEvaluatorConfig
+from openai_client import AzureOpenAIServiceConfig
 from pydantic import BaseModel, Field
 from semantic_workbench_assistant.config import UISchema
-
-from . import helpers
 
 # The semantic workbench app uses react-jsonschema-form for rendering
 # dynamic configuration forms based on the configuration model and UI schema
@@ -27,128 +22,39 @@ from . import helpers
 #
 
 
-class ExtensionsConfigModel(BaseModel):
-    workflows: Annotated[
-        WorkflowsConfigModel,
-        Field(
-            title="Workflows Extension Configuration",
-            description="Configuration for the workflows extension.",
-        ),
-    ] = WorkflowsConfigModel()
-
-    attachments: Annotated[
-        AttachmentsConfigModel,
-        Field(
-            title="Attachments Extension Configuration",
-            description="Configuration for the attachments extension.",
-        ),
-    ] = AttachmentsConfigModel()
-
-    artifacts: Annotated[
-        ArtifactsConfigModel,
-        Field(
-            title="Artifacts Extension Configuration",
-            description="Configuration for the artifacts extension.",
-        ),
-    ] = ArtifactsConfigModel()
-
-
-class HighTokenUsageWarning(BaseModel):
-    enabled: Annotated[
-        bool,
-        Field(
-            title="Enabled",
-            description="Whether to warn when the assistant's token usage is high.",
-        ),
-    ] = True
-
-    message: Annotated[
-        str,
-        Field(
-            title="Message",
-            description="The message to display when the assistant's token usage is high.",
-        ),
-        UISchema(widget="textarea"),
-    ] = (
-        "The assistant's token usage is high. If there are attachments that are no longer needed, you can delete them"
-        " to free up tokens."
-    )
-
-    threshold: Annotated[
-        int,
-        Field(
-            title="Threshold",
-            description="The threshold percentage at which to warn about high token usage.",
-        ),
-    ] = 90
-
-
 # the workbench app builds dynamic forms based on the configuration model and UI schema
 class AssistantConfigModel(BaseModel):
-    enable_debug_output: Annotated[
-        bool,
-        Field(
-            title="Include Debug Output",
-            description="Include debug output on conversation messages.",
-        ),
-    ] = False
-
-    instruction_prompt: Annotated[
+    aoai_fast_deployment_name: Annotated[
         str,
         Field(
-            title="Instruction Prompt",
-            description="The prompt used to instruct the behavior of the AI assistant.",
+            title="Deployment Name (Fast Model)",
+            description="Deployment of a fast model to use. Recommended is gpt-4o-mini",
         ),
-        UISchema(widget="textarea"),
-    ] = (
-        "You are an AI assistant that helps people with their work. In addition to text, you can also produce markdown,"
-        " code snippets, and other types of content. If you wrap your response in triple backticks, you can specify the"
-        " language for syntax highlighting. For example, ```python print('Hello, World!')``` will produce a code"
-        " snippet in Python. Mermaid markdown is supported if you wrap the content in triple backticks and specify"
-        ' \'mermaid\' as the language. For example, ```mermaid graph TD; A["A"]-->B["B"];``` will render a flowchart for the'
-        " user.ABC markdown is supported if you wrap the content in triple backticks and specify 'abc' as the"
-        " language.For example, ```abc C4 G4 A4 F4 E4 G4``` will render a music score and an inline player with a link"
-        " to download the midi file."
-    )
+    ] = "gpt-4o-mini-2024-07-18"
 
-    welcome_message: Annotated[
+    aoai_gpt4o_deployment_name: Annotated[
         str,
         Field(
-            title="Welcome Message",
-            description="The message to display when the conversation starts.",
+            title="Deployment Name (GPT-4o Model)",
+            description="Deployment of a gpt-4o model to use. Recommended is gpt-4o-2024-11-20",
         ),
-        UISchema(widget="textarea"),
-    ] = (
-        'Hello! I am a "co-intelligence" assistant that can help you synthesize information from conversations and'
-        " documents to create a shared understanding of complex topics. Let's get started by having a conversation!"
-        " You can also attach .docx, text, and image files to your chat messages to help me better understand the"
-        " context of our conversation. Where would you like to start?"
-    )
+    ] = "gpt-4o-2024-11-20"
 
-    only_respond_to_mentions: Annotated[
-        bool,
+    aoai_o3_deployment_name: Annotated[
+        str,
         Field(
-            title="Only Respond to @Mentions",
-            description="Only respond to messages that @mention the assistant.",
+            title="Deployment Name (o3 Model)",
+            description="Deployment of an o3 model to use. Recommended is o3-mini-2025-01-31",
         ),
-    ] = False
+    ] = "o3-mini-2025-01-31"
 
-    high_token_usage_warning: Annotated[
-        HighTokenUsageWarning,
+    service_config: Annotated[
+        AzureOpenAIServiceConfig,
         Field(
-            title="High Token Usage Warning",
-            description="Configuration for the high token usage warning.",
+            title="Azure OpenAI Service Configuration",
+            description="Configuration for the Azure OpenAI service.",
+            default=AzureOpenAIServiceConfig.model_construct(),
         ),
-    ] = HighTokenUsageWarning()
-
-    ai_client_config: Annotated[
-        AzureOpenAIClientConfigModel,
-        Field(
-            title="AI Client Configuration",
-            discriminator="ai_service_type",
-            default=AzureOpenAIClientConfigModel.model_construct(),
-        ),
-        UISchema(widget="radio", hide_title=True),
     ]
 
     content_safety_config: Annotated[
@@ -159,23 +65,13 @@ class AssistantConfigModel(BaseModel):
         UISchema(widget="radio"),
     ] = CombinedContentSafetyEvaluatorConfig()
 
-    use_inline_attachments: Annotated[
+    enable_debug_output: Annotated[
         bool,
         Field(
-            title="Use Inline Attachments",
-            description="Experimental: place attachment content where it was uploaded in the conversation history.",
+            title="Include Debug Output",
+            description="Include debug output on conversation messages.",
         ),
     ] = False
-
-    extensions_config: Annotated[
-        ExtensionsConfigModel,
-        Field(
-            title="Extensions Configuration",
-            description="Configuration for the assistant extensions.",
-        ),
-    ] = ExtensionsConfigModel()
-
-    # add any additional configuration fields
 
 
 # endregion
