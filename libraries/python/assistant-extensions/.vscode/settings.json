@@ -13,9 +13,7 @@
   "python.analysis.autoFormatStrings": true,
   "python.analysis.autoImportCompletions": true,
   "python.analysis.diagnosticMode": "workspace",
-  "python.analysis.fixAll": [
-    "source.unusedImports"
-  ],
+  "python.analysis.fixAll": ["source.unusedImports"],
   "python.analysis.inlayHints.functionReturnTypes": true,
   "python.analysis.typeCheckingMode": "standard",
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
@@ -50,10 +48,13 @@
     "DMAIC",
     "endregion",
     "Excalidraw",
+    "giphy",
+    "modelcontextprotocol",
     "openai",
     "pdfplumber",
     "pydantic",
     "pyright",
-    "pytest"
+    "pytest",
+    "semanticworkbench"
   ]
 }

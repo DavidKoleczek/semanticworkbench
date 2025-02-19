@@ -34,7 +34,7 @@ async def main(
     common_skill = cast(CommonSkill, context.skills["common"])
     language_model = common_skill.config.language_model
 
-    system_message = "You are a summarizer. Your job is to summarize the content provided by the user."
+    system_message = "You are a summarizer. Your job is to summarize the content provided by the user. Don't lose important information."
     if aspect:
         system_message += f" Summarize the content only from this aspect: {aspect}"
 
@@ -48,21 +48,26 @@ async def main(
     }
 
     logger.debug("Completion call.", extra=extra_data(make_completion_args_serializable(completion_args)))
-    context.log({"completion_args": make_completion_args_serializable(completion_args)})
+    metadata = {}
+    metadata["completion_args"] = make_completion_args_serializable(completion_args)
     try:
         completion = await language_model.beta.chat.completions.parse(
             **completion_args,
         )
         validate_completion(completion)
         logger.debug("Completion response.", extra=extra_data({"completion": completion.model_dump()}))
-        context.log({"completion": completion.model_dump()})
+        metadata["completion"] = completion.model_dump()
     except Exception as e:
         completion_error = CompletionError(e)
-        context.log({"completion_error": completion_error.message})
+        metadata["completion_error"] = completion_error.message
         logger.error(
             completion_error.message,
             extra=extra_data({"completion_error": completion_error.body, "metadata": context.metadata_log}),
         )
         raise completion_error from e
     else:
-        return message_content_from_completion(completion)
+        summary = message_content_from_completion(completion)
+        metadata["summary"] = summary
+        return summary
+    finally:
+        context.log("summarize", metadata)
