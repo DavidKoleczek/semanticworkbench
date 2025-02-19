@@ -123,7 +123,6 @@ class MarkdownEditConfig(BaseModel):
         default=DEFAULT_DOC_EDIT_TASK,
         description="A description of the task to be performed.",
     )
-    name_model: str = Field(default="gpt-4o-2024-11-20")
     knowledge_cutoff: str = Field(default="2023-10")
     include_examples: bool = Field(default=False)
     change_summary_prefix: str = Field(default="[Document Editor]: ")
@@ -140,6 +139,15 @@ class MarkdownEditOutput(BaseModel):
         default="",
         description="Optional message the model can send if something goes wrong, like the if the task or conversation doesn't make sense.",
     )
+
+
+# endregion
+
+# region Response
+
+
+class ResponseConfig(BaseModel):
+    use_gpt_4o: bool = Field(default=True)
 
 
 # endregion

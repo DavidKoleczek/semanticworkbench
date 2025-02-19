@@ -6,6 +6,8 @@ from typing import Any
 from liquid import Template
 from pydantic import BaseModel
 
+from assistant.types import MessageT
+
 
 def _apply_templates(value: Any, variables: dict[str, str]) -> Any:
     """Recursively applies Liquid templating to all string fields within the given value."""
@@ -24,7 +26,7 @@ def _apply_templates(value: Any, variables: dict[str, str]) -> Any:
         return value
 
 
-def compile_messages(messages: list[dict[str, Any]], variables: dict[str, str]) -> list[dict[str, Any]]:
+def compile_messages(messages: list[MessageT], variables: dict[str, str]) -> list[MessageT]:
     """Compiles messages using Liquid templating and the provided variables.
     Calls Template(content_part).render(**variables) on each text content part.
 

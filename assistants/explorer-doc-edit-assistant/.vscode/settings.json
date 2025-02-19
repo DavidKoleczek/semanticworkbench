@@ -48,6 +48,9 @@
     "uv.lock"
   ],
   "cSpell.words": [
+    "aoai",
+    "blockified",
+    "blockify",
     "Codespaces",
     "contentsafety",
     "deepmerge",
@@ -65,6 +68,8 @@
     "pyproject",
     "pyright",
     "tiktoken",
+    "unblockified",
+    "unblockify",
     "updown",
     "virtualenvs"
   ]

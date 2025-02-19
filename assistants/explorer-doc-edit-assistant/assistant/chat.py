@@ -128,8 +128,7 @@ async def on_message_created(
             async with context.state_updated_event_after(
                 document_inspector_state_provider.display_name, focus_event=True
             ):
-                # TODO: Pass the deployment names to the routine instead of hardcoding them.
-                assistant_api = AssistantAPI(context, config.service_config)
+                assistant_api = AssistantAPI(context, config)
                 routine = RoutineIteration(assistant_api)
                 definition = RoutineDefinition()
                 await routine.run_routine(definition)

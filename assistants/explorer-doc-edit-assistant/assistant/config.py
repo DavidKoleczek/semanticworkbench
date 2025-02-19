@@ -28,7 +28,7 @@ class AssistantConfigModel(BaseModel):
         str,
         Field(
             title="Deployment Name (Fast Model)",
-            description="Deployment of a fast model to use. Recommended is gpt-4o-mini",
+            description="Deployment of a fast model to use. Recommended is to point to gpt-4o-mini-2024-07-18",
         ),
     ] = "gpt-4o-mini-2024-07-18"
 
@@ -36,7 +36,7 @@ class AssistantConfigModel(BaseModel):
         str,
         Field(
             title="Deployment Name (GPT-4o Model)",
-            description="Deployment of a gpt-4o model to use. Recommended is gpt-4o-2024-11-20",
+            description="Deployment of a gpt-4o model to use. Recommended is to point to gpt-4o-2024-11-20",
         ),
     ] = "gpt-4o-2024-11-20"
 
@@ -44,7 +44,7 @@ class AssistantConfigModel(BaseModel):
         str,
         Field(
             title="Deployment Name (o3 Model)",
-            description="Deployment of an o3 model to use. Recommended is o3-mini-2025-01-31",
+            description="Deployment of an o3 model to use. Recommended is to point to o3-mini-2025-01-31",
         ),
     ] = "o3-mini-2025-01-31"
 
@@ -52,7 +52,7 @@ class AssistantConfigModel(BaseModel):
         AzureOpenAIServiceConfig,
         Field(
             title="Azure OpenAI Service Configuration",
-            description="Configuration for the Azure OpenAI service.",
+            description="Configuration for the Azure OpenAI service. NOTE: The model deployment names in this section will be ignored.",
             default=AzureOpenAIServiceConfig.model_construct(),
         ),
     ]
@@ -64,14 +64,6 @@ class AssistantConfigModel(BaseModel):
         ),
         UISchema(widget="radio"),
     ] = CombinedContentSafetyEvaluatorConfig()
-
-    enable_debug_output: Annotated[
-        bool,
-        Field(
-            title="Include Debug Output",
-            description="Include debug output on conversation messages.",
-        ),
-    ] = False
 
 
 # endregion

@@ -9,9 +9,8 @@ from typing import Any
 
 import pendulum
 from assistant_extensions.attachments._attachments import _get_attachments, log_and_send_message_on_error
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AsyncAzureOpenAI
-from openai_client.client import _get_azure_bearer_token_provider
-from openai_client.config import AzureOpenAIServiceConfig
 from semantic_workbench_api_model.workbench_model import (
     MessageType,
     NewConversationMessage,
@@ -33,15 +32,32 @@ class AssistantAPI:
     def __init__(
         self,
         context: ConversationContext,
-        service_config: AzureOpenAIServiceConfig,
+        config: AssistantConfigModel,
     ) -> None:
         self.context = context
-        self.service_config = service_config
+        self.config = config
+        azure_bearer_token_provider = get_bearer_token_provider(
+            DefaultAzureCredential(),
+            "https://cognitiveservices.azure.com/.default",
+        )
         self.openai_client = AsyncAzureOpenAI(
-            azure_ad_token_provider=_get_azure_bearer_token_provider(),
-            azure_endpoint=str(service_config.azure_openai_endpoint),
+            azure_ad_token_provider=azure_bearer_token_provider,
+            azure_endpoint=str(config.service_config.azure_openai_endpoint),
             api_version="2025-01-01-preview",
         )
+
+    def get_model_name(self, model_type: str) -> str:
+        """
+        Get the model name for the specified model type.
+        """
+        if model_type == "fast":
+            return self.config.aoai_fast_deployment_name
+        elif model_type == "gpt-4o":
+            return self.config.aoai_gpt4o_deployment_name
+        elif model_type == "o3":
+            return self.config.aoai_o3_deployment_name
+        else:
+            raise ValueError(f"Unknown model type: {model_type}")
 
     async def send_message(self, message: str, message_type: MessageType = MessageType.chat) -> None:
         """
@@ -107,7 +123,10 @@ class AssistantAPI:
                     None,
                 )
                 participant_name = conversation_participant.name if conversation_participant else "unknown"
-                message_dt = pendulum.instance(message.timestamp).strftime("%b %-d, %Y at %-I:%M %p")
+                message_dt = pendulum.instance(
+                    message.timestamp,
+                    tz="America/New_York",
+                ).strftime("%b %-d, %Y at %-I:%M %p")
                 message_content = f"[{participant_name}, {message_dt}] {message.content}"
                 if message.sender.participant_id == self.context.assistant.id:
                     history.append(AssistantMessage(content=message_content))
@@ -132,8 +151,7 @@ class AssistantAPI:
             if not attachment.error and attachment.content:
                 attachments_string += f"""<attachment-{attachment.filename}>
 {attachment.content.strip()}
-</attachment-{attachment.filename}>
-"""
+</attachment-{attachment.filename}>\n\n"""
         return attachments_string.strip()
 
     def write_file(self, content: str, filename: str, subdirectory: str) -> None:

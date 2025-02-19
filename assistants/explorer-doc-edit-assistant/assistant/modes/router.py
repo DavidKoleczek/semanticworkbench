@@ -42,7 +42,7 @@ class Router:
         )
         routing_messages = routing_messages + routine_context.chat_history
         kwargs = {
-            "model": "gpt-4o-2024-11-20",
+            "model": self.assistant_api.get_model_name("gpt-4o"),
             "messages": routing_messages,
             "temperature": 0,
             "tools": [MODE_DOC_EDIT_TOOL, MODE_RESPONSE_TOOL],
