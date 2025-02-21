@@ -32,7 +32,6 @@
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
       "source.fixAll": "explicit",
-      "source.unusedImports": "explicit",
       "source.organizeImports": "explicit",
       "source.formatDocument": "explicit"
     }
