@@ -144,6 +144,10 @@
       "path": "mcp-servers/mcp-server-vscode"
     },
     {
+      "name": "mcp-servers:mcp-server-word",
+      "path": "mcp-servers/mcp-server-word"
+    },
+    {
       "name": "mcp-servers:mcp-server-template",
       "path": "mcp-servers/mcp-server-template"
     },
