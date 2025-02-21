@@ -30,7 +30,7 @@ class AssistantConfigModel(BaseModel):
             title="Deployment Name (Fast Model)",
             description="Deployment of a fast model to use. Recommended is to point to gpt-4o-mini-2024-07-18",
         ),
-    ] = "gpt-4o-mini-2024-07-18"
+    ] = "gpt-4o-mini"
 
     aoai_gpt4o_deployment_name: Annotated[
         str,
@@ -38,7 +38,7 @@ class AssistantConfigModel(BaseModel):
             title="Deployment Name (GPT-4o Model)",
             description="Deployment of a gpt-4o model to use. Recommended is to point to gpt-4o-2024-11-20",
         ),
-    ] = "gpt-4o-2024-11-20"
+    ] = "gpt-4o"
 
     aoai_o3_deployment_name: Annotated[
         str,
@@ -46,7 +46,7 @@ class AssistantConfigModel(BaseModel):
             title="Deployment Name (o3 Model)",
             description="Deployment of an o3 model to use. Recommended is to point to o3-mini-2025-01-31",
         ),
-    ] = "o3-mini-2025-01-31"
+    ] = "o3-mini"
 
     service_config: Annotated[
         AzureOpenAIServiceConfig,

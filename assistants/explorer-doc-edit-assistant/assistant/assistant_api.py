@@ -23,7 +23,8 @@ from semantic_workbench_assistant.assistant_app import (
 )
 
 from assistant.config import AssistantConfigModel
-from assistant.types import AssistantMessage, MessageT, UserMessage
+from assistant.helpers import TokenizerOpenAI
+from assistant.types import AssistantMessage, MessageT, RoutineDebugInfo, UserMessage
 
 logger = logging.getLogger(__name__)
 
@@ -36,15 +37,22 @@ class AssistantAPI:
     ) -> None:
         self.context = context
         self.config = config
+
+        # Init AOAI Client
         azure_bearer_token_provider = get_bearer_token_provider(
             DefaultAzureCredential(),
             "https://cognitiveservices.azure.com/.default",
         )
+
         self.openai_client = AsyncAzureOpenAI(
             azure_ad_token_provider=azure_bearer_token_provider,
             azure_endpoint=str(config.service_config.azure_openai_endpoint),
             api_version="2025-01-01-preview",
+            timeout=1200,
         )
+
+        # Init tokenizer (don't want to re-initialize this every time since its expensive)
+        self.tokenizer = TokenizerOpenAI(model="gpt-4o")
 
     def get_model_name(self, model_type: str) -> str:
         """
@@ -59,7 +67,25 @@ class AssistantAPI:
         else:
             raise ValueError(f"Unknown model type: {model_type}")
 
-    async def send_message(self, message: str, message_type: MessageType = MessageType.chat) -> None:
+    def get_tokenizer(self) -> TokenizerOpenAI:
+        return self.tokenizer
+
+    def format_debug_info(self, debug_info: RoutineDebugInfo) -> dict[str, Any]:
+        """
+        Format the debug info for display.
+        """
+
+        routine_debug_info_data = debug_info.model_dump(mode="json", exclude_none=True)
+
+        metadata = {
+            "debug": {"token_data": routine_debug_info_data},
+            "footer_items": [f"Context tokens: {debug_info.tokens_total}"],
+        }
+        return metadata
+
+    async def send_message(
+        self, message: str, message_type: MessageType = MessageType.chat, debug_info: RoutineDebugInfo | None = None
+    ) -> None:
         """
         Sends a chat message to the UX.
         """
@@ -67,6 +93,7 @@ class AssistantAPI:
             NewConversationMessage(
                 content=message,
                 message_type=message_type,
+                metadata=self.format_debug_info(debug_info) if debug_info else None,
             )
         )
 

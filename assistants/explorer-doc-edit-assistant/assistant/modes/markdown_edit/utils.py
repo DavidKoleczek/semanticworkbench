@@ -1,3 +1,5 @@
+# Copyright (c) Microsoft. All rights reserved.
+
 import re
 from copy import deepcopy
 from typing import Any

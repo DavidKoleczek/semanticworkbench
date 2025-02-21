@@ -1,4 +1,5 @@
 # Copyright (c) Microsoft. All rights reserved.
+
 import re
 
 import pendulum
@@ -46,9 +47,9 @@ class Response:
                 "messages": response_messages,
                 "model": self.assistant_api.get_model_name("o3"),
                 "reasoning_effort": "high",
-                "max_completion_tokens": 25000,
+                "max_completion_tokens": 20000,
             }
         response_result = await self.assistant_api.chat_completion(**kwargs)  # type: ignore
         chat_message = response_result.choices[0].message.content
-        chat_message = re.sub(r"^\[.*?\]", "", chat_message).lstrip()
+        chat_message = re.sub(r"^\[.*?\]", "", chat_message).lstrip() # Removes the "[<name> <timestamp]" prefix that the model sometimes adds
         return ResponseOutput(message=chat_message)

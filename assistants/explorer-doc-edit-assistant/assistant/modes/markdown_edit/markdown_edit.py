@@ -48,8 +48,9 @@ class MarkdownEdit:
             "messages": reasoning_messages,
             "model": self.assistant_api.get_model_name("o3"),
             "reasoning_effort": "high",
-            "max_completion_tokens": 25000,
+            "max_completion_tokens": 20000,
         }
+
         reasoning_response = await self.assistant_api.chat_completion(**kwargs)
         reasoning = reasoning_response.choices[0].message.content
 

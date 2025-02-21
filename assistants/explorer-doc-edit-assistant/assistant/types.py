@@ -104,10 +104,27 @@ MessageT = AssistantMessage | DeveloperMessage | SystemMessage | ToolMessage | U
 # region Routines
 
 
+class RoutineDebugInfo(BaseModel):
+    tokens_total: int
+    tokens_attachments_total: int
+    tokens_chat_history_total: int
+    tokens_current_document_total: int
+
+    @classmethod
+    def create_empty(cls) -> "RoutineDebugInfo":
+        return cls(
+            tokens_total=0,
+            tokens_attachments_total=0,
+            tokens_chat_history_total=0,
+            tokens_current_document_total=0,
+        )
+
+
 class RoutineContext(BaseModel):
     current_document: str
     chat_history: list[MessageT]
     attachments: str = Field(default="")
+    debug_info: RoutineDebugInfo = Field(default_factory=RoutineDebugInfo.create_empty)
 
 
 # endregion

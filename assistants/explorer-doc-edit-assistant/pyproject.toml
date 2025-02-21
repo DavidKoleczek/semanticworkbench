@@ -18,6 +18,7 @@ dependencies = [
     "openai-client>=0.1.0",
     "pendulum>=3.0",
     "python-liquid>=1.13",
+    "tiktoken>=0.9"
 ]
 
 [tool.hatch.build.targets.wheel]
